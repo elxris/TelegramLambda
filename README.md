@@ -25,4 +25,4 @@ El archivo debe ir en `src/env.json` y debe tener una configuración semenjante:
 
 Por lo que antes de poder probar este código _así como está_ tendrías que configurar el `AWS API Gateway` crear una tabla en `DynamoDB` con el nombre de `Telegram`, y con el `@BotFather` obtener tu token de bot.
 
-Cuando tengas todo lo anterior y hayas puesto las variables en tu configuración de entorno puedes proceder a empaquetar todo el proyecto en un _.zip_ y enviarlo a _AWS Lambda_.
+Cuando tengas todo lo anterior y hayas puesto las variables en tu configuración de entorno puedes proceder a empaquetar todo el proyecto en un _.zip_ y enviarlo a _AWS Lambda_ con `npm run zip`.
