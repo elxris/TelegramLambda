@@ -1,25 +1,34 @@
 'use strict';
 
-var Promise = require('bluebird');
-var request = require('request');
+var https    = require('https');
 var config  = require('./env');
 
-// Build base url for API of Telegram
-var BASE_URL = 'https://api.telegram.org/bot' + config.TELEGRAM_TOKEN + '/';
-
-var makeRequest = function(method, data, cb) {
+var makeRequest = function(method, data) {
   var options = {
-    baseUrl: BASE_URL,
-    uri: method,
-    json: true,
-    body: data
+    hostname: 'api.telegram.org',
+    method: 'POST',
+    path: '/bot' + config.TELEGRAM_TOKEN + '/' + method,
+    headers: {
+      'Content-Type': 'application/json'
+    }
   };
-  request.post(options, function(err, response) {
-      if (err) { return cb(err); }
-      console.log(method + ' response.body:', response.body);
-      console.log(method + ' response.headers:', response.headers);
-      return cb(null, response);
+  return new Promise(function(resolve, reject) {
+    var req = https.request(options, function(res) {
+      var body = '';
+      // console.log(method + 'response.headers:', res.headers);
+      res.setEncoding('utf8');
+      res.on('data', function(chunk) {
+        body += chunk;
+      });
+      res.on('end', function() {
+        // console.log(method + 'response.body:', body);
+        resolve(body);
+      });
     });
+    req.on('error', reject);
+    req.write(JSON.stringify(data));
+    req.end();
+  });
 };
 
-module.exports = Promise.promisify(makeRequest);
+module.exports = makeRequest;

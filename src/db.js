@@ -1,8 +1,7 @@
 'use strict';
 
-var Promise = require('bluebird');
 var AWS     = require('aws-sdk');
-var dynamo  = Promise.promisifyAll(new AWS.DynamoDB.DocumentClient());
+var dynamo  = new AWS.DynamoDB.DocumentClient();
 var config  = require('./env');
 
 // DynamoDB Table Name, Ej. 'Telegram'
@@ -10,7 +9,7 @@ var TABLE_NAME = config.DYNAMO_TABLE_NAME;
 
 var db = function() {};
 db.logResponse = function(res) {
-  console.log('DYNAMO RESPONSE:', res);
+  //console.log('DYNAMO RESPONSE:', res);
   return res;
 };
 db.logError = function(params) {
@@ -35,24 +34,35 @@ db.getUser = function(user) {
   params.ExpressionAttributeValues = {
     ':mc': 1
   };
-  return dynamo.updateAsync(params)
-    .then(db.logResponse)
-    .catch(db.logError(params))
-    .catch(function(err) {
-      if (!~err.message.indexOf('element does not match the schema')) {
-        return db.createUser(user);
+  return new Promise(function(resolve, reject) {
+    dynamo.update(params, function(error, response) {
+      if (error) {
+        db.logError(params)(error);
+        if (!~error.message.indexOf('element does not match the schema')) {
+          return db.createUser(user);
+        }
+        return reject(error);
       }
-      throw err;
+      db.logResponse(response);
+      resolve(response);
     });
+  });
 };
 db.createUser = function(user) {
   var params = db.params();
   params.Item = {
     UserID: user.id + ''
   };
-  return dynamo.putAsync(params)
-    .then(db.logResponse)
-    .catch(db.logError(params));
+  return new Promise(function(resolve, reject) {
+    dynamo.put(params, function(error, response) {
+      if (error) {
+        db.logError(params)(error);
+        return reject(error);
+      }
+      db.logResponse(params);
+      resolve(response);
+    });
+  });
 };
 
 module.exports = db;
